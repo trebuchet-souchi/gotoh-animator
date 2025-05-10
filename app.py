@@ -7,6 +7,10 @@ import streamlit as st
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
 
+import warnings
+# experimental_set_query_params の非推奨警告を抑制
+warnings.filterwarnings("ignore", message=".*experimental_set_query_params.*")
+
 # 1. ページ設定
 st.set_page_config(
     page_title="後藤 Animator",
