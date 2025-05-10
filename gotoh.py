@@ -106,12 +106,13 @@ class GoatGenerator:
         return im
 
     def generate_animation(self, outline: bool, transparent: bool):
+        """
+        全フレームを生成して PIL.Image のリストを返す
+        """
         frames = []
-        # 例：16×16 の単色フレームを４枚返すダミー実装
-        colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00']
-        for c in colors:
-            mode = 'RGBA' if transparent else 'RGB'
-            bg = ImageColor.getcolor(c, 'RGB')
-            im = Image.new(mode, FRAME_SIZE, bg)
-            frames.append(im)
+        # フレームの基本パラメータを決定
+        # body_shape, eye_positions, leg_shapes, horns など...
+        # ここに生成ロジックを記述
+        # 省略可
+        # 最終的に frames.append(self.generate_frame(...)) が呼ばれる
         return frames
