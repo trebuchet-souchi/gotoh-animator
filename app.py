@@ -19,9 +19,10 @@ st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 
 # ——— 2) seed の初期値を URL から読み込む ——————————————
 # st.query_params は {"seed": ["abc"], ...} の dict
-initial_seed = st.query_params.get("seed", [""])
+seed_list = st.query_params.get("seed", [])
+initial_seed = seed_list[0] if seed_list else ""
 if "seed_input" not in st.session_state:
-    st.session_state.seed_input = initial_seed[0]
+    st.session_state.seed_input = initial_seed
 
 # ─── サイドバー：設定UIを常にトップレベルで定義 ─────────────────
 with st.sidebar:
