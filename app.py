@@ -122,13 +122,43 @@ with st.sidebar:
         key="generate_button"
     )
 
-# 6. 初回ロード時自動生成
-# initial_seed は if 内のローカル変数なので参照せず、初回ロード判定のフラグを利用
-if st.session_state.initial_loaded and st.session_state.initial_loaded is True and st.session_state.gif_bytes is None:
-    # 自動的に生成
-    generate_animation()
+# 6. 初回ロード時自動生成フラグ設定（起動時のみ）
+# 初回ロード時に URL パラメータを反映したら、自動生成フラグを立てる
+if st.session_state.initial_loaded and "do_auto_generate" not in st.session_state:
+    st.session_state.do_auto_generate = True
 
-# 7. 結果表示 結果表示
+# 7. サイドバーUIの下に自動生成ロジックをインライン実行
+if st.session_state.do_auto_generate:
+    # 自動生成を実行
+    seed = st.session_state.seed_input
+    gotoh.PALETTE['bg'] = BG_OPTIONS[st.session_state.bg_color]
+    gen = GoatGenerator(seed)
+    frames = gen.generate_animation(
+        st.session_state.outline,
+        st.session_state.transparent
+    )
+    buf = io.BytesIO()
+    big_frames = [
+        f.resize((16 * st.session_state.scale, 16 * st.session_state.scale), Image.NEAREST)
+        for f in frames
+    ]
+    save_kwargs = {
+        'format': 'GIF',
+        'save_all': True,
+        'append_images': big_frames[1:],
+        'duration': gotoh.FRAME_DELAY_MS,
+        'loop': 0,
+        'disposal': 2,
+    }
+    if st.session_state.transparent:
+        save_kwargs['transparency'] = 0
+    big_frames[0].save(buf, **save_kwargs)
+    buf.seek(0)
+    st.session_state.gif_bytes = buf.getvalue()
+    # 二重実行防止
+    st.session_state.do_auto_generate = False
+
+# 8. 結果表示 結果表示
 if st.session_state.gif_bytes:
     st.subheader(
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
@@ -136,6 +166,14 @@ if st.session_state.gif_bytes:
     st.image(
         st.session_state.gif_bytes,
         width=16 * st.session_state.scale
+    )
+
+    # ダウンロードボタンを追加
+    st.download_button(
+        label="🎁 GIF をダウンロード",
+        data=st.session_state.gif_bytes,
+        file_name=f"goat_{st.session_state.seed_input}.gif",
+        mime="image/gif"
     )
 
     # 8. シェアリンク作成（シードと背景色を "シード|背景色" にパック）
