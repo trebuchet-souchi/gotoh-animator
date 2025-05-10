@@ -95,7 +95,7 @@ with st.sidebar:
         key="randomize"
     )
     st.checkbox(
-        "輪郭を表示",
+        "輪郭線",
         key="outline"
     )
     st.checkbox(
@@ -151,6 +151,8 @@ if st.session_state.gif_bytes:
         "低確率で後藤に橙の角や青い角が生える")
     st.markdown(
         "更に低確率で後藤の後頭部や尻のあたりに小さい「マタ後藤」ができる")
+    st.markdown(
+        "輪郭線をつけると後藤の目が潰れることが多い")
     st.markdown(
         f"[Xで後藤をシェア]({intent_url})",
         unsafe_allow_html=True
