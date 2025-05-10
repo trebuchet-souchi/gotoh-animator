@@ -96,7 +96,8 @@ if generate_button:
     )
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
-    st.experimental_set_query_params(seed=st.session_state.seed_input)
+    # 生成後 URL バーを書き換え（正式 API）
+    st.set_query_params(seed=st.session_state.seed_input)
 
 # ─── 結果表示 ───────────────────────────────────────────────
 if st.session_state.gif_bytes:
