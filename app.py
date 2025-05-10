@@ -2,11 +2,10 @@
 import random
 import io
 from PIL import Image
-import streamlit as st
-import gotoh
-from gotoh import GoatGenerator, BG_OPTIONS
 import urllib.parse
 import streamlit as st
+import gotoh
+from gotoh import GoatGenerator, BG_OPTION
 
 # ─── ページ設定は必ず最初に ───────────────────────────────
 st.set_page_config(page_title="後藤Animator", layout="wide")
