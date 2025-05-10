@@ -21,7 +21,7 @@ st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 # st.query_params は {"seed": ["abc"], ...} の dict
 initial_seed = st.query_params.get("seed", [""])
 if "seed_input" not in st.session_state:
-    st.session_state.seed_input = initial_seed
+    st.session_state.seed_input = initial_seed[0]
 
 # ─── サイドバー：設定UIを常にトップレベルで定義 ─────────────────
 with st.sidebar:
