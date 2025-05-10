@@ -74,11 +74,8 @@ def generate_animation():
 # 5. サイドバーUI
 with st.sidebar:
     st.header("Settings")
-    st.text_input(
-        "Seed（使いたい文字列）",
-        value=st.session_state.seed_input,
-        key="seed_input"
-    )
+    # シード入力（セッションステートと同期）
+    st.text_input("Seed（使いたい文字列）", key="seed_input")
     st.checkbox("🔀 ランダムシードにする", key="randomize")
     st.checkbox("輪郭を表示", key="outline")
     st.checkbox("背景を透明に", key="transparent")
@@ -97,19 +94,16 @@ with st.sidebar:
     st.button("▶️ 生成", on_click=generate_animation, key="generate_button")
 
 # 6. 初回ロード時の自動生成
-if initial_seed:
-    # すでにgif_bytesがある場合は再生成を避ける
-    if st.session_state.gif_bytes is None:
-        generate_animation()
+if initial_seed and st.session_state.gif_bytes is None:
+    generate_animation()
 
 # 7. 結果表示
-gif = st.session_state.gif_bytes
-if gif:
+if st.session_state.gif_bytes:
     st.subheader(
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
     )
     st.image(
-        gif,
+        st.session_state.gif_bytes,
         width=16 * st.session_state.scale
     )
 
