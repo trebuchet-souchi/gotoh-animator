@@ -109,7 +109,7 @@ if st.session_state.gif_bytes:
     )
 # ─── シェアリンクを作る ────────────────────
 # 1) あなたの公開アプリのベース URL
-app_base_url = "https://share.streamlit.io/あなたのユーザー名/リポジトリ/main/app.py"
+app_base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
 
 # 2) 現在のシード
 current_seed = st.session_state.seed_input
