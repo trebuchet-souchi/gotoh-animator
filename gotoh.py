@@ -57,8 +57,6 @@ class GoatGenerator:
         self.eye_weights = [(2, 50), (1, 20), (3, 15), (4, 10), (5, 5)]
         self.leg_weights = [(4, 40)] + [(i, 10) for i in range(1, 8) if i != 4]
         self.horn_weights = [(i, 1) for i in range(1, 6)]
-        # ③ 新しく決まった seed を URL に反映
-        st.experimental_set_query_params(seed=st.session_state.seed_input)
 
     def weighted_choice(self, choices):
         total = sum(w for _, w in choices)
