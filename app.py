@@ -19,7 +19,7 @@ st.session_state.setdefault("last_seed", "")
 st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 
 # ② クエリパラメータから初期シードを取得してセッションにセット
-params = st.experimental_get_query_params()
+params = st.get_query_params()
 initial_seed = params.get("seed", [""])[0]
 # seed_input キーがなければ初回にだけセット
 if "seed_input" not in st.session_state:
