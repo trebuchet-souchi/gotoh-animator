@@ -17,8 +17,11 @@ st.title("🐐 Goat Pixel Animator")
 
 # 2. URL クエリパラメータから初期シードを取得
 initial_seed = st.query_params.get("seed", [""])[0]
+st.write("▶️ raw query_params:", st.query_params)               # 何が来ている？
+st.write("▶️ initial_seed repr:", repr(initial_seed))          # 文字列として正しいか？
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
+st.write("▶️ session_state.seed_input repr:", repr(st.session_state.seed_input))
 
 # 3. セッションステートの初期値設定
 defaults = {
