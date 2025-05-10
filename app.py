@@ -135,14 +135,15 @@ if st.session_state.gif_bytes:
         width=16 * st.session_state.scale
     )
 
-    # 8. シェアリンク作成（seed & bg）
+        # 8. シェアリンク作成（seed & bg_color）
     base_url = (
         "https://share.streamlit.io/"
         "trebuchet-souchi/gotoh-animator/main/app.py"
     )
     seed_quoted = urllib.parse.quote(st.session_state.seed_input)
     bg_quoted = urllib.parse.quote(st.session_state.bg_color)
-    url_with_seed = f"{base_url}?seed={seed_quoted}&bg={bg_quoted}"
+    # クエリパラメータ名を bg_color に統一
+    url_with_seed = f"{base_url}?seed={seed_quoted}&bg_color={bg_quoted}"
     text = f"後藤「{st.session_state.seed_input}」"
     text_quoted = urllib.parse.quote(text)
     intent_url = (
@@ -150,6 +151,9 @@ if st.session_state.gif_bytes:
         f"&url={urllib.parse.quote(url_with_seed)}"
     )
     st.markdown(
+        f"[Xで後藤をシェア]({intent_url})",
+        unsafe_allow_html=True
+    )(
         f"[Xで後藤をシェア]({intent_url})",
         unsafe_allow_html=True
     )
