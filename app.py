@@ -148,7 +148,9 @@ if st.session_state.gif_bytes:
         f"&url={urllib.parse.quote(url_with_seed)}"
     )
     st.markdown(
-        "低確率で後藤に橙の角や青い角が生える<br>更に低確率で後藤の後頭部や尻のあたりに小さい「マタ後藤」ができる")
+        "低確率で後藤に橙の角や青い角が生える")
+    st.markdown(
+        "更に低確率で後藤の後頭部や尻のあたりに小さい「マタ後藤」ができる")
     st.markdown(
         f"[Xで後藤をシェア]({intent_url})",
         unsafe_allow_html=True
