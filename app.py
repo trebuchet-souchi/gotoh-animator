@@ -61,6 +61,8 @@ with st.sidebar:
 
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
 if generate_button:
+    setter = getattr(st, "set_query_params", st.experimental_set_query_params)
+    setter(seed=seed_input)
     # 背景色を即反映
     gotoh.PALETTE["bg"] = BG_OPTIONS[bg_color]
 
