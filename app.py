@@ -9,11 +9,11 @@ from gotoh import GoatGenerator, BG_OPTIONS
 
 # 1. ページ設定
 st.set_page_config(
-    page_title="🐐 Goat Pixel Animator",
+    page_title="後藤 Animator",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-st.title("🐐 Goat Pixel Animator")
+st.title("後藤 Animator")
 
 # 2. クエリパラメータから初期seedを取得
 params = st.experimental_get_query_params()
@@ -52,16 +52,19 @@ def generate_animation():
         f.resize((16*st.session_state.scale, 16*st.session_state.scale), Image.NEAREST)
         for f in frames
     ]
-    big[0].save(
-        buf,
-        format='GIF',
-        save_all=True,
-        append_images=big[1:],
-        duration=150,
-        loop=0,
-        disposal=2,
-        transparency=0
-    )
+    # save_all と disposal は常に指定
+    save_kwargs = {
+        'format': 'GIF',
+        'save_all': True,
+        'append_images': big[1:],
+        'duration': 150,
+        'loop': 0,
+        'disposal': 2
+    }
+    # 透明背景時のみ transparency を指定
+    if st.session_state.transparent:
+        save_kwargs['transparency'] = 0
+    big[0].save(buf, **save_kwargs)
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
 
