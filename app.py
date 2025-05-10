@@ -41,7 +41,7 @@ if "seed_input" not in st.session_state:
 st.session_state.setdefault("gif_bytes", None)
 st.session_state.setdefault("bg_color", list(BG_OPTIONS.keys())[0])
 st.session_state.setdefault("scale", 10)
-st.session_state.setdefault("randomize", False)
+st.session_state.setdefault("randomize", True)
 st.session_state.setdefault("outline", False)
 st.session_state.setdefault("transparent", False)
 
