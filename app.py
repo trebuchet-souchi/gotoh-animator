@@ -11,18 +11,16 @@ from gotoh import GoatGenerator, BG_OPTIONS
 st.set_page_config(page_title="後藤Animator", layout="wide")
 st.title("後藤Animator")
 
-# ─── セッションステートの初期化 ────────────────────────────
-# gif_bytes, last_seed, last_bg だけ保持すればOK
-st.session_state.setdefault("gif_bytes", None)
-st.session_state.setdefault("last_seed", "")
-st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
-
-# ——— 2) seed の初期値を URL から読み込む ——————————————
-# st.query_params は {"seed": ["abc"], ...} の dict
+# ─── 1) クエリから seed の初期値を読み込んで state にセット ──────────
 params = st.experimental_get_query_params()
 initial_seed = params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
+
+# ─── セッションステートの初期化 ────────────────────────────
+st.session_state.setdefault("gif_bytes", None)
+st.session_state.setdefault("bg_color", next(iter(BG_OPTIONS.keys())))
+st.session_state.setdefault("scale", 10)
 
 # ─── サイドバー：設定UIを常にトップレベルで定義 ─────────────────
 with st.sidebar:
@@ -31,7 +29,8 @@ with st.sidebar:
     # テキスト入力と各ウィジェット（ラベルを唯一に）
     seed_input = st.text_input(
         "Seed（使いたい文字列）",
-        value=st.session_state.last_seed
+        value=st.session_state.seed_input,
+        key="seed_input"
     )
     randomize = st.checkbox(
         "🔀 ランダムシードにする",
@@ -48,21 +47,31 @@ with st.sidebar:
     bg_color = st.selectbox(
         "背景色",
         options=list(BG_OPTIONS.keys()),
-        index=list(BG_OPTIONS.keys()).index(st.session_state.last_bg)
+        index=list(BG_OPTIONS.keys()).index(st.session_state.bg_color),
+        key="bg_color"
     )
     scale = st.selectbox(
         "拡大率",
         [1, 10, 15, 20],
-        index=1
+        index=[1,10,15,20].index(st.session_state.scale),
+        key="scale"
     )
 
     # 生成ボタン（サイドバーに常時表示）
-    generate_button = st.button("▶️ 生成")
+    generate_button = st.button("▶️ 生成", key="generate_button")
 
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
 if generate_button:
-    setter = getattr(st, "set_query_params", st.experimental_set_query_params)
-    st.experimental_set_query_params(seed=seed_input)
+    # 1) シードを最終決定して state に書き戻し
+    if randomize or not seed_input:
+        seed = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
+    else:
+        seed = seed_input
+    st.session_state.seed_input = seed
+
+    # 2) URL に反映（experimental API で統一）
+    st.experimental_set_query_params(seed=seed)
+    
     # 背景色を即反映
     gotoh.PALETTE["bg"] = BG_OPTIONS[bg_color]
 
@@ -118,6 +127,12 @@ current_seed = st.session_state.seed_input
 url_with_seed = f"{app_base_url}?seed={urllib.parse.quote(current_seed)}"
 
 # 4) 投稿テキスト
+app_base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
+# 現在のシードを state から取得
+current_seed = st.session_state.seed_input
+# seed 付き URL を組み立て
+url_with_seed = f"{app_base_url}?seed={urllib.parse.quote(current_seed)}"
+# ツイート文を作成
 tweet_text = f"後藤「{current_seed}」"
 
 # 5) X Web Intent URL を組み立て
