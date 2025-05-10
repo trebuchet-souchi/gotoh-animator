@@ -106,13 +106,90 @@ class GoatGenerator:
         return im
 
     def generate_animation(self, outline: bool, transparent: bool):
-        """
-        全フレームを生成して PIL.Image のリストを返す
-        """
+       base = (3,5,13,11)
+        bw, bh = base[2]-base[0], base[3]-base[1]
+        eye_n = self.weighted_choice(self.eye_weights)
+        leg_n = self.weighted_choice(self.leg_weights)
+        horn_n = self.weighted_choice(self.horn_weights)
+        # 目配置
+        eyes = []
+        a = 0
+        while len(eyes) < eye_n and a < 50:
+            ex, ey = self.rand.randint(8,12), self.rand.randint(6,9)
+            if all(abs(ex-ox)>1 or abs(ey-oy)>1 for ox,oy in eyes):
+                eyes.append((ex,ey))
+            a += 1
+        # 脚配置
+        legs = []
+        for _ in range(leg_n):
+            x0, y0 = self.rand.randint(5,10), 11
+            dy_leg = self.rand.randint(1,2)
+            xm, ym = x0 + self.rand.choice([-1,0,1]), y0 + dy_leg
+            legs.append((x0, y0, xm, ym))
+        # 角配置
+        horns = []
+        for _ in range(horn_n):
+            r = self.rand.random()
+            if r < 0.10: col = PALETTE['horn_blue']
+            elif r < 0.25: col = PALETTE['horn_alt']
+            else: col = PALETTE['horn']
+            x, y = self.rand.randint(6,9), 5
+            ln = self.rand.randint(2,3)
+            if self.rand.random() < 0.4:
+                d = self.rand.choice([-1,1])
+                by = y - (ln//2)
+                bx = x + d
+                horns.extend([(x,y,bx,by,col), (bx,by,x,y-ln,col)])
+            else:
+                horns.append((x,y,x,y-ln,col))
+        # 小ゴート生成
+        small_flag = self.rand.random() < 0.05
+        small_shape = (0,0,0,0)
+        small_eyes = []
+        small_horns = []
+        if small_flag:
+            w = max(2, int(bw*0.3))
+            h = max(3, int(bh*0.3))
+            off = self.rand.randint(2,3)
+            sx0 = max(0, base[0] - off)
+            sy0 = base[1] if self.rand.choice([True,False]) else base[3] - h
+            small_shape = (sx0, sy0, sx0+w, sy0+h)
+            cnt_eyes = self.rand.randint(1,3)
+            b = 0
+            while len(small_eyes) < cnt_eyes and b < 20:
+                ex, ey = self.rand.randint(sx0+1, sx0+w-1), self.rand.randint(sy0+1, sy0+h-1)
+                if all(abs(ex-ox)>1 or abs(ey-oy)>1 for ox,oy in small_eyes): small_eyes.append((ex,ey))
+                b += 1
+            cnt_horns = self.rand.randint(0,3)
+            min_eye_y = min(ey for _,ey in small_eyes)
+            max_horn_y = min_eye_y - 2
+            for _ in range(cnt_horns):
+                r = self.rand.random()
+                if r < 0.10: col = PALETTE['horn_blue']
+                elif r < 0.25: col = PALETTE['horn_alt']
+                else: col = PALETTE['horn']
+                hx = self.rand.randint(sx0+1, sx0+w-1)
+                hy = self.rand.randint(sy0, max_horn_y if max_horn_y >= sy0 else sy0)
+                ln = self.rand.randint(1,2)
+                if self.rand.random() < 0.4:
+                    d = self.rand.choice([-1,1])
+                    by = hy - (ln//2)
+                    bx = hx + d
+                    small_horns.extend([(hx,hy,bx,by,col), (bx,by,hx,hy-ln,col)])
+                else:
+                    small_horns.append((hx,hy,hx,hy-ln,col))
+        # フレーム生成
         frames = []
-        # フレームの基本パラメータを決定
-        # body_shape, eye_positions, leg_shapes, horns など...
-        # ここに生成ロジックを記述
-        # 省略可
-        # 最終的に frames.append(self.generate_frame(...)) が呼ばれる
+        for dy in [-1,0,1]:
+            dx0, dy0 = self.rand.randint(-1,1), self.rand.randint(-1,1)
+            dx1, dy1 = self.rand.randint(-1,1), self.rand.randint(-1,1)
+            body_shape = (base[0]+dx0, base[1]+dy0, base[2]+dx1, base[3]+dy1)
+            legs_f = [(x0 + self.rand.choice([-1,0,1]), y0, x1 + self.rand.choice([-1,0,1]), y1)
+                      for x0,y0,x1,y1 in legs]
+            # outlineとtransparentを引数から渡すように修正
+            frames.append(self.generate_frame(
+                body_shape, eyes, legs_f, horns,
+                small_shape, small_eyes, small_horns,
+                small_flag, dy, outline, transparent
+            ))
         return frames
