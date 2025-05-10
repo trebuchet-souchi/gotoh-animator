@@ -7,10 +7,6 @@ import streamlit as st
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
 
-import warnings
-# experimental_set_query_params の非推奨警告を抑制
-warnings.filterwarnings("ignore", message=".*experimental_set_query_params.*")
-
 # 1. ページ設定
 st.set_page_config(
     page_title="後藤 Animator",
@@ -18,16 +14,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 st.title("後藤 Animator")
-# -- hide experimental_set_query_params deprecation banner via JS hack --
+# Hide deprecation banner for experimental_set_query_params via JS
 st.markdown("""
 <script>
-setTimeout(() => {
+function hideDeprecation() {
   document.querySelectorAll('div').forEach(el => {
-    if (el.innerText.includes('replace st.experimental_set_query_params')) {
+    if (el.innerText && el.innerText.includes('experimental_set_query_params')) {
       el.style.display = 'none';
     }
   });
-}, 1000);
+}
+setTimeout(hideDeprecation, 1000);
+setInterval(hideDeprecation, 2000);
 </script>
 """, unsafe_allow_html=True)
 
