@@ -9,11 +9,11 @@ from gotoh import GoatGenerator, BG_OPTIONS
 
 # 1. ページ設定
 st.set_page_config(
-    page_title="🐐 Goat Pixel Animator",
+    page_title="後藤 Animator",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-st.title("🐐 Goat Pixel Animator")
+st.title("後藤 Animator")
 
 # 2. セッションステートのデフォルト値設定
 defaults = {
@@ -147,6 +147,8 @@ if st.session_state.gif_bytes:
         f"https://twitter.com/intent/tweet?text={urllib.parse.quote(text)}"
         f"&url={urllib.parse.quote(url_with_seed)}"
     )
+    st.markdown(
+        "低確率で後藤に橙の角や青い角が生える")
     st.markdown(
         f"[Xで後藤をシェア]({intent_url})",
         unsafe_allow_html=True
