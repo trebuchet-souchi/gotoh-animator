@@ -17,8 +17,8 @@ st.session_state.setdefault("gif_bytes", None)
 st.session_state.setdefault("last_seed", "")
 st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 
-# ② クエリパラメータから初期シードを取得してセッションにセット
-params = st.experimental_get_query_params()
+# ——— 2) seed の初期値を URL から読み込む ——————————————
+# st.query_params は {"seed": ["abc"], ...} の dict
 initial_seed = st.query_params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
@@ -33,6 +33,7 @@ with st.sidebar:
     value=st.session_state.seed_input,
     key="seed_input"
     )
+    generate_button = st.button("▶️ 生成")
     randomize = st.checkbox(
         "🔀 ランダムシードにする",
         value=(seed_input == "")
@@ -95,8 +96,9 @@ if generate_button:
     )
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
-    # 生成後 URL バーを書き換え（正式 API）
-    st.set_query_params(seed=st.session_state.seed_input)
+# ——— 5) 生成後に URL を書き換える ——————————————
+# ここだけ呼び出せる正式 API
+st.set_query_params(seed=seed_input)
 
 # ─── 結果表示 ───────────────────────────────────────────────
 if st.session_state.gif_bytes:
