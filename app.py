@@ -99,7 +99,7 @@ if generate_button:
     st.session_state.gif_bytes = buf.getvalue()
 # ——— 5) 生成後に URL を書き換える ——————————————
 # ここだけ呼び出せる正式 API
-st.set_query_params(seed=seed_input)
+st.experimental_set_query_params(seed=seed_input)
 
 # ─── 結果表示 ───────────────────────────────────────────────
 if st.session_state.gif_bytes:
