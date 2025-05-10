@@ -18,6 +18,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 st.title("後藤 Animator")
+# -- hide experimental_set_query_params deprecation banner via JS hack --
+st.markdown("""
+<script>
+setTimeout(() => {
+  document.querySelectorAll('div').forEach(el => {
+    if (el.innerText.includes('replace st.experimental_set_query_params')) {
+      el.style.display = 'none';
+    }
+  });
+}, 1000);
+</script>
+""", unsafe_allow_html=True)
 
 # 2. クエリパラメータから初期seedを取得
 params = st.experimental_get_query_params()
