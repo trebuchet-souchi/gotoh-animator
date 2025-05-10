@@ -47,7 +47,7 @@ def generate_animation():
     else:  # なければ experimental API をフォールバックで使用
         st.experimental_set_query_params(seed=seed)
     # 背景色を反映
-    gotoh.PALETTE['bg']['bg'] = BG_OPTIONS[st.session_state.bg_color]
+    gotoh.PALETTE['bg'] = BG_OPTIONS[st.session_state.bg_color]
     # フレーム生成
     gen = GoatGenerator(seed)
     frames = gen.generate_animation(
