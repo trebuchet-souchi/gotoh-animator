@@ -29,7 +29,14 @@ for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
 # 3. クエリパラメータから初期シード取得
+# 2. URL クエリパラメータから初期シードを取得
 initial_seed = st.query_params.get("seed", [""])[0]
+st.write("▶️ raw query_params:", st.query_params)               # 何が来ている？
+st.write("▶️ initial_seed repr:", repr(initial_seed))          # 文字列として正しいか？
+if "seed_input" not in st.session_state:
+    st.session_state.seed_input = initial_seed
+st.write("▶️ session_state.seed_input repr:", repr(st.session_state.seed_input))
+
 
 # ■■ ここで JavaScript によるフォールバックでテキストボックスに完全な文字列を注入 ■■
 import streamlit.components.v1 as components
