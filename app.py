@@ -33,9 +33,6 @@ for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
 # 4. アニメ生成関数
-# ※ URLの直接更新（set_query_params）は削除
-#    シェアリンクには st.session_state.seed_input をそのまま使用します
-
 def generate_animation():
     # シード決定
     if st.session_state.randomize or not st.session_state.seed_input:
@@ -95,17 +92,24 @@ with st.sidebar:
     )
     st.button("▶️ 生成", on_click=generate_animation, key="generate_button")
 
-# 6. 結果表示
-if st.session_state.gif_bytes:
+# 6. 初回ロード時の自動生成
+if initial_seed:
+    # すでにgif_bytesがある場合は再生成を避ける
+    if st.session_state.gif_bytes is None:
+        generate_animation()
+
+# 7. 結果表示
+gif = st.session_state.gif_bytes
+if gif:
     st.subheader(
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
     )
     st.image(
-        st.session_state.gif_bytes,
+        gif,
         width=16 * st.session_state.scale
     )
 
-    # 7. シェアリンク作成
+    # 8. シェアリンク作成
     base_url = (
         "https://share.streamlit.io/"
         "trebuchet-souchi/gotoh-animator/main/app.py"
