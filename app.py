@@ -9,11 +9,11 @@ from gotoh import GoatGenerator, BG_OPTIONS
 
 # 1. ページ設定
 st.set_page_config(
-    page_title="🐐 Goat Pixel Animator",
+    page_title="後藤 Animator",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-st.title("🐐 Goat Pixel Animator")
+st.title("後藤 Animator")
 
 # 2. セッションステートのデフォルト値設定
 defaults = {
@@ -123,10 +123,12 @@ with st.sidebar:
     )
 
 # 6. 初回ロード時自動生成
-if initial_seed and st.session_state.gif_bytes is None:
+# initial_seed は if 内のローカル変数なので参照せず、初回ロード判定のフラグを利用
+if st.session_state.initial_loaded and st.session_state.initial_loaded is True and st.session_state.gif_bytes is None:
+    # 自動的に生成
     generate_animation()
 
-# 7. 結果表示
+# 7. 結果表示 結果表示
 if st.session_state.gif_bytes:
     st.subheader(
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
