@@ -119,6 +119,12 @@ with st.sidebar:
         on_click=generate_animation,
         key="generate_button"
     )
+    st.markdown(
+        "低確率で後藤に橙の角や青い角が生える")
+    st.markdown(
+        "更に低確率で後藤の後頭部や尻のあたりに小さい「マタ後藤」ができる")
+    st.markdown(
+        "輪郭線をつけると後藤の目が潰れることが多い")
 
 # 6. 初回ロード時自動生成
 if initial_seed and st.session_state.gif_bytes is None:
