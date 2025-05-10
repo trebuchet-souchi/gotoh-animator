@@ -19,7 +19,7 @@ st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 
 # ——— 2) seed の初期値を URL から読み込む ——————————————
 # st.query_params は {"seed": ["abc"], ...} の dict
-initial_seed = st.query_params.get("seed", [""])[0]
+initial_seed = st.query_params.get("seed", [""])
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
 
