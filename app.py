@@ -19,7 +19,6 @@ st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
 
 # ——— 2) seed の初期値を URL から読み込む ——————————————
 # st.query_params は {"seed": ["abc"], ...} の dict
-seed_list = st.query_params.get("seed", [])
 params = st.experimental_get_query_params()
 initial_seed = params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
@@ -63,7 +62,7 @@ with st.sidebar:
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
 if generate_button:
     setter = getattr(st, "set_query_params", st.experimental_set_query_params)
-    setter(seed=seed_input)
+    st.experimental_set_query_params(seed=seed_input)
     # 背景色を即反映
     gotoh.PALETTE["bg"] = BG_OPTIONS[bg_color]
 
@@ -98,9 +97,6 @@ if generate_button:
     )
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
-# ——— 5) 生成後に URL を書き換える ——————————————
-# ここだけ呼び出せる正式 API
-st.experimental_set_query_params(seed=seed_input)
 
 # ─── 結果表示 ───────────────────────────────────────────────
 if st.session_state.gif_bytes:
