@@ -27,210 +27,190 @@ PALETTE = {
 FRAME_SIZE = (16, 16)
 FRAME_DELAY_MS = 150
 
-
+# Bresenhamの線生成
 def get_line_points(x0, y0, x1, y1):
-    """Bresenham のアルゴリズムで線上のピクセルを返す"""
     points = []
-    dx = abs(x1 - x0); dy = -abs(y1 - y0)
-    sx = 1 if x0 < x1 else -1; sy = 1 if y0 < y1 else -1
-    err = dx + dy
-    while True:
-        points.append((x0, y0))
-        if x0 == x1 and y0 == y1:
-            break
-        e2 = 2 * err
-        if e2 >= dy:
-            err += dy; x0 += sx
-        if e2 <= dx:
-            err += dx; y0 += sy
+    dx, dy = abs(x1 - x0), abs(y1 - y0)
+    x, y = x0, y0
+    sx, sy = (1 if x1 > x0 else -1), (1 if y1 > y0 else -1)
+    if dx > dy:
+        err = dx // 2
+        while x != x1:
+            points.append((x, y)); err -= dy
+            if err < 0: y += sy; err += dx
+            x += sx
+        points.append((x, y))
+    else:
+        err = dy // 2
+        while y != y1:
+            points.append((x, y)); err -= dx
+            if err < 0: x += sx; err += dy
+            y += sy
+        points.append((x, y))
     return points
 
-
 class GoatGenerator:
-    """山羊ピクセルアニメーションを生成するクラス"""
+    def __init__(self, seed_str):
+        # シードによる一貫乱数生成
+        h = hashlib.sha256(seed_str.encode()).digest()
+        self.rand = random.Random(int.from_bytes(h, 'big'))
+        self.eye_weights = [(2, 50), (1, 20), (3, 15), (4, 10), (5, 5)]
+        self.leg_weights = [(4, 40)] + [(i, 10) for i in range(1, 8) if i != 4]
+        self.horn_weights = [(i, 1) for i in range(1, 6)]
 
-    def __init__(self, seed: str):
-        self.seed_str = seed
-        h = hashlib.sha256(seed.encode('utf-8')).digest()
-        self.rand = random.Random(int.from_bytes(h[:8], 'big'))
-        # 重み
-        self.eye_weights = [1, 2, 3]
-        self.leg_weights = [2, 3, 4]
-        self.horn_weights = [1, 2]
+    def weighted_choice(self, choices):
+        total = sum(w for _, w in choices)
+        r = self.rand.uniform(0, total)
+        upto = 0
+        for item, w in choices:
+            if upto + w >= r:
+                return item
+            upto += w
 
-    def weighted_choice(self, options):
-        """重み付き選択（均等確率）"""
-        return self.rand.choice(options)
-
-    def generate_frame(
-        self, body_shape, eye_positions, leg_shapes,
-        horn_shapes, small_shape, small_eyes, small_horns,
-        small_flag, dy, outline: bool, transparent: bool
-    ):
-        mode = 'RGBA' if transparent else 'RGB'
-        bg = ImageColor.getcolor(PALETTE['bg'], 'RGB')
-        im = Image.new(mode, FRAME_SIZE, bg)
+    def generate_frame(self, body_shape, eye_positions, leg_shapes,
+                       horns, small_shape, small_eyes, small_horns,
+                       small_flag, dy, outline, transparent):
+        # 背景生成
+        if transparent:
+            im = Image.new('RGBA', FRAME_SIZE, (0, 0, 0, 0))
+        else:
+            bg_rgb = ImageColor.getcolor(PALETTE['bg'], 'RGB')
+            im = Image.new('RGBA', FRAME_SIZE, bg_rgb + (255,))
         draw = ImageDraw.Draw(im)
 
+        bx0, by0, bx1, by1 = body_shape
         # 本体
-        draw.ellipse(body_shape, fill=PALETTE['body'])
+        draw.ellipse((bx0, by0+dy, bx1, by1+dy), fill=PALETTE['body'])
         if outline:
-            for px, py in get_line_points(*body_shape[:2], *body_shape[2:]):
-                draw.point((px, py), fill=PALETTE['eye'])
-
+            draw.ellipse((bx0, by0+dy, bx1, by1+dy), outline=PALETTE['eye'])
         # 目
         for ex, ey in eye_positions:
-            draw.point((ex, ey + dy), fill=PALETTE['eye'])
-
+            draw.point((ex, ey+dy), fill=PALETTE['eye'])
         # 脚
         for x0, y0, x1, y1 in leg_shapes:
-            draw.line((x0, y0 + dy, x1, y1 + dy), fill=PALETTE['body'])
+            draw.line((x0, y0+dy, x1, y1+dy), fill=PALETTE['body'])
             if outline:
                 for px, py in get_line_points(x0, y0, x1, y1):
-                    draw.point((px-1, py+dy), fill=PALETTE['eye'])
-                    draw.point((px+1, py+dy), fill=PALETTE['eye'])
-
+                    wx, wy = px-1, py
+                    if 0 <= wx < 16 and 0 <= wy+dy < 16:
+                        draw.point((wx, wy+dy), fill=PALETTE['eye'])
+                    sx, sy = px, py+1
+                    if 0 <= sx < 16 and 0 <= sy+dy < 16:
+                        draw.point((sx, sy+dy), fill=PALETTE['eye'])
         # 角
-        for x0, y0, x1, y1, col in horn_shapes:
-            # 1ドットだけでなく、長さを ln に基づく
-            for px, py in get_line_points(x0, y0 + dy, x1, y1 + dy):
-                draw.point((px, py), fill=col)
-
+        for x0, y0, x1, y1, col in horns:
+            draw.line((x0, y0+dy, x1, y1+dy), fill=col)
         # 小ゴート
         if small_flag:
-            draw.ellipse(small_shape, fill=PALETTE['body'])
-            # 合体する位置に描画
+            sx0, sy0, sx1, sy1 = small_shape
+            draw.ellipse((sx0, sy0+dy, sx1, sy1+dy), fill=PALETTE['body'])
+            if outline:
+                draw.ellipse((sx0, sy0+dy, sx1, sy1+dy), outline=PALETTE['eye'])
+                ox0, ox1 = max(sx0, bx0), min(sx1, bx1)
+                oy0, oy1 = max(sy0, by0), min(sy1, by1)
+                for x in range(ox0, ox1):
+                    for y in range(oy0+dy, oy1+dy):
+                        if im.getpixel((x,y))[:3] == ImageColor.getcolor(PALETTE['eye'], 'RGB'):
+                            im.putpixel((x,y), ImageColor.getcolor(PALETTE['body'], 'RGB') + (255,))
             for ex, ey in small_eyes:
-                draw.point((ex, ey + dy), fill=PALETTE['eye'])
+                draw.point((ex, ey+dy), fill=PALETTE['eye'])
             for x0, y0, x1, y1, col in small_horns:
-                for px, py in get_line_points(x0, y0 + dy, x1, y1 + dy):
-                    draw.point((px, py), fill=col)
-
+                draw.line((x0, y0+dy, x1, y1+dy), fill=col)
+        # 隙間埋め
+        if small_flag:
+            gx0, gx1 = small_shape[2], body_shape[0]
+            gy0, gy1 = max(small_shape[1], by0), min(small_shape[3], by1)
+            for gx in range(gx0, gx1):
+                for gy in range(gy0, gy1):
+                    if im.getpixel((gx, gy+dy))[:3] == ImageColor.getcolor(PALETTE['bg'], 'RGB'):
+                        im.putpixel((gx, gy+dy), ImageColor.getcolor(PALETTE['body'], 'RGB') + (255,))
         return im
 
-    def generate_animation(self, outline: bool, transparent: bool):
-        """全フレームを生成、オリジナルに近いロジックを適用する"""
-        base = (3, 5, 13, 11)
-        bw, bh = base[2] - base[0], base[3] - base[1]
-
-        # 各パーツ数
+    def generate_animation(self, outline, transparent):
+        base = (3,5,13,11)
+        bw, bh = base[2]-base[0], base[3]-base[1]
         eye_n = self.weighted_choice(self.eye_weights)
         leg_n = self.weighted_choice(self.leg_weights)
         horn_n = self.weighted_choice(self.horn_weights)
-
-        # 目
+        # 目配置
         eyes = []
-        attempts = 0
-        while len(eyes) < eye_n and attempts < 50:
-            ex = self.rand.randint(base[0]+2, base[2]-2)
-            ey = self.rand.randint(base[1], base[3])
+        a = 0
+        while len(eyes) < eye_n and a < 50:
+            ex, ey = self.rand.randint(8,12), self.rand.randint(6,9)
             if all(abs(ex-ox)>1 or abs(ey-oy)>1 for ox,oy in eyes):
-                eyes.append((ex, ey))
-            attempts += 1
-
-        # 脚
+                eyes.append((ex,ey))
+            a += 1
+        # 脚配置
         legs = []
         for _ in range(leg_n):
-            x0 = self.rand.randint(base[0]+1, base[2]-1)
-            y0 = base[3]
-            ln = self.rand.randint(1, 3)
-            angle = self.rand.choice([-1, 1])
-            x1 = x0 + angle * ln
-            y1 = y0 - ln
-            legs.append((x0, y0, x1, y1))
-
-        # 角
+            x0, y0 = self.rand.randint(5,10), 11
+            dy_leg = self.rand.randint(1,2)
+            xm, ym = x0 + self.rand.choice([-1,0,1]), y0 + dy_leg
+            legs.append((x0, y0, xm, ym))
+        # 角配置
         horns = []
         for _ in range(horn_n):
-            x = self.rand.randint(base[0]+1, base[2]-1)
-            y = base[1]
-            ln = self.rand.randint(2, 3)
-            col_r = self.rand.random()
-            if col_r < 0.10:
-                col = PALETTE['horn_blue']
-            elif col_r < 0.25:
-                col = PALETTE['horn_alt']
-            else:
-                col = PALETTE['horn']
-            # 枝分かれあり
+            r = self.rand.random()
+            if r < 0.10: col = PALETTE['horn_blue']
+            elif r < 0.25: col = PALETTE['horn_alt']
+            else: col = PALETTE['horn']
+            x, y = self.rand.randint(6,9), 5
+            ln = self.rand.randint(2,3)
             if self.rand.random() < 0.4:
-                off = self.rand.choice([-1,1])
-                bx = x + off
-                by = y - ln//2
-                horns.append((x, y, bx, by, col))
-                horns.append((bx, by, x, y - ln, col))
+                d = self.rand.choice([-1,1])
+                by = y - (ln//2)
+                bx = x + d
+                horns.extend([(x,y,bx,by,col), (bx,by,x,y-ln,col)])
             else:
-                horns.append((x, y, x, y - ln, col))
-
-        # ミニ山羊
+                horns.append((x,y,x,y-ln,col))
+        # 小ゴート生成
         small_flag = self.rand.random() < 0.05
-        small_horns = []
-        small_eyes = []
         small_shape = (0,0,0,0)
+        small_eyes = []
+        small_horns = []
         if small_flag:
-            w = max(2, int(bw*0.4))
-            h = max(2, int(bh*0.4))
-            off = self.rand.randint(1,2)
-            sx = base[0] + off
-            sy = base[1] + off
-            small_shape = (sx, sy, sx + w, sy + h)
-            # 小目
+            w = max(2, int(bw*0.3))
+            h = max(3, int(bh*0.3))
+            off = self.rand.randint(2,3)
+            sx0 = max(0, base[0] - off)
+            sy0 = base[1] if self.rand.choice([True,False]) else base[3] - h
+            small_shape = (sx0, sy0, sx0+w, sy0+h)
             cnt_eyes = self.rand.randint(1,3)
             b = 0
             while len(small_eyes) < cnt_eyes and b < 20:
-                ex = self.rand.randint(sx+1, sx+w-1)
-                ey = self.rand.randint(sy+1, sy+h-1)
-                if all(abs(ex-ox)>1 or abs(ey-oy)>1 for ox,oy in small_eyes):
-                    small_eyes.append((ex, ey))
+                ex, ey = self.rand.randint(sx0+1, sx0+w-1), self.rand.randint(sy0+1, sy0+h-1)
+                if all(abs(ex-ox)>1 or abs(ey-oy)>1 for ox,oy in small_eyes): small_eyes.append((ex,ey))
                 b += 1
-            # 小角
-            cnt_horns = self.rand.randint(1,2)
+            cnt_horns = self.rand.randint(0,3)
+            min_eye_y = min(ey for _,ey in small_eyes)
+            max_horn_y = min_eye_y - 2
             for _ in range(cnt_horns):
-                xh = self.rand.randint(sx+1, sx+w-1)
-                yh = sy
-                ln2 = self.rand.randint(1,2)
-                cr = self.rand.random()
-                if cr < 0.10:
-                    ch = PALETTE['horn_blue']
-                elif cr < 0.25:
-                    ch = PALETTE['horn_alt']
-                else:
-                    ch = PALETTE['horn']
+                r = self.rand.random()
+                if r < 0.10: col = PALETTE['horn_blue']
+                elif r < 0.25: col = PALETTE['horn_alt']
+                else: col = PALETTE['horn']
+                hx = self.rand.randint(sx0+1, sx0+w-1)
+                hy = self.rand.randint(sy0, max_horn_y if max_horn_y >= sy0 else sy0)
+                ln = self.rand.randint(1,2)
                 if self.rand.random() < 0.4:
-                    off2 = self.rand.choice([-1,1])
-                    bx2 = xh + off2
-                    by2 = yh + ln2//2
-                    small_horns.append((xh, yh, bx2, by2, ch))
-                    small_horns.append((bx2, by2, xh, yh - ln2, ch))
+                    d = self.rand.choice([-1,1])
+                    by = hy - (ln//2)
+                    bx = hx + d
+                    small_horns.extend([(hx,hy,bx,by,col), (bx,by,hx,hy-ln,col)])
                 else:
-                    small_horns.append((xh, yh, xh, yh - ln2, ch))
-
+                    small_horns.append((hx,hy,hx,hy-ln,col))
         # フレーム生成
         frames = []
-        for dy in [-1, 0, 1]:
-            dx0 = self.rand.randint(-1,1)
-            dy0 = self.rand.randint(-1,1)
-            dx1 = self.rand.randint(-1,1)
-            dy1 = self.rand.randint(-1,1)
-            body_shape = (
-                base[0]+dx0, base[1]+dy0,
-                base[2]+dx1, base[3]+dy1
-            )
-            leg_shapes = []
-            for x0, y0, x1, y1 in legs:
-                leg_shapes.append((
-                    x0 + self.rand.choice([-1,0,1]),
-                    y0,
-                    x1 + self.rand.choice([-1,0,1]),
-                    y1
-                ))
-            horn_shapes = horns.copy()
-            small_horn_shapes = small_horns.copy()
-            frame = self.generate_frame(
-                body_shape, eyes, leg_shapes,
-                horn_shapes, small_shape,
-                small_eyes, small_horn_shapes,
+        for dy in [-1,0,1]:
+            dx0, dy0 = self.rand.randint(-1,1), self.rand.randint(-1,1)
+            dx1, dy1 = self.rand.randint(-1,1), self.rand.randint(-1,1)
+            body_shape = (base[0]+dx0, base[1]+dy0, base[2]+dx1, base[3]+dy1)
+            legs_f = [(x0 + self.rand.choice([-1,0,1]), y0, x1 + self.rand.choice([-1,0,1]), y1)
+                      for x0,y0,x1,y1 in legs]
+            # outlineとtransparentを引数から渡すように修正
+            frames.append(self.generate_frame(
+                body_shape, eyes, legs_f, horns,
+                small_shape, small_eyes, small_horns,
                 small_flag, dy, outline, transparent
-            )
-            frames.append(frame)
+            ))
         return frames
