@@ -28,30 +28,10 @@ defaults = {
 for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
-# 3. クエリパラメータから初期シード取得
-# 2. URL クエリパラメータから初期シードを取得
-initial_seed = st.query_params.get("seed", [""])[0]
-st.write("▶️ raw query_params:", st.query_params)               # 何が来ている？
-st.write("▶️ initial_seed repr:", repr(initial_seed))          # 文字列として正しいか？
-if "seed_input" not in st.session_state:
-    st.session_state.seed_input = initial_seed
-st.write("▶️ session_state.seed_input repr:", repr(st.session_state.seed_input))
-
-
-# ■■ ここで JavaScript によるフォールバックでテキストボックスに完全な文字列を注入 ■■
-import streamlit.components.v1 as components
-# シードが存在する場合、input要素に値をセット
-if initial_seed:
-    js_code = f"""
-    <script>
-    const seed = `{initial_seed}`;
-    document.querySelectorAll('input').forEach(el => {{
-      if (el.placeholder === 'Seed（使いたい文字列）') {{ el.value = seed; }}
-    }});
-    </script>
-    """
-    components.html(js_code, height=0)
-
+# 3. URL クエリパラメータから初期シード取得
+# st.query_params.get returns a string if only one value is provided
+raw_seed = st.query_params.get("seed", "")
+initial_seed = raw_seed
 if initial_seed and not st.session_state.seed_input:
     st.session_state.seed_input = initial_seed
 
