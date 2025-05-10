@@ -5,7 +5,7 @@ from PIL import Image
 import urllib.parse
 import streamlit as st
 import gotoh
-from gotoh import GoatGenerator, BG_OPTION
+from gotoh import GoatGenerator, BG_OPTIONS
 
 # ─── ページ設定は必ず最初に ───────────────────────────────
 st.set_page_config(page_title="後藤Animator", layout="wide")
