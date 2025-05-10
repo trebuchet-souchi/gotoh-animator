@@ -29,16 +29,18 @@ for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
 # 3. URL クエリパラメータから初期値取得
-# seed: 文字列をそのまま取得（listではなくstr）
-initial_seed = st.query_params.get("seed", "") or ""
+# seed
+seed_param = st.query_params.get("seed")
+initial_seed = seed_param[0] if isinstance(seed_param, list) and seed_param else (seed_param or "")
 if initial_seed and not st.session_state.seed_input:
     st.session_state.seed_input = initial_seed
-# bg_color: 同様に文字列をそのまま取得
-initial_bg = st.query_params.get("bg", "") or ""
+# bg_color
+bg_param = st.query_params.get("bg")
+initial_bg = bg_param[0] if isinstance(bg_param, list) and bg_param else (bg_param or "")
 if initial_bg in BG_OPTIONS and st.session_state.bg_color != initial_bg:
     st.session_state.bg_color = initial_bg
 
-# 4. アニメ生成関数 アニメ生成関数
+# 4. アニメ生成関数
 def generate_animation():
     # シード選択
     if st.session_state.randomize or not st.session_state.seed_input:
