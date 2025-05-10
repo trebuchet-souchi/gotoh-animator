@@ -30,11 +30,9 @@ with st.sidebar:
 
     # テキスト入力と各ウィジェット（ラベルを唯一に）
     seed_input = st.text_input(
-    "Seed（使いたい文字列）",
-    value=st.session_state.seed_input,
-    key="seed_input"
+        "Seed（使いたい文字列）",
+        value=st.session_state.last_seed
     )
-    generate_button = st.button("▶️ 生成")
     randomize = st.checkbox(
         "🔀 ランダムシードにする",
         value=(seed_input == "")
