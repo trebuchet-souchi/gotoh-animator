@@ -1,8 +1,8 @@
 # app.py
 import random
 import io
-from PIL import Image
 import urllib.parse
+from PIL import Image
 import streamlit as st
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
@@ -15,18 +15,22 @@ st.set_page_config(
 )
 st.title("🐐 Goat Pixel Animator")
 
-# 2. クエリパラメータから初期seedを取得（正式 API のみ使用）
+# 2. URL クエリパラメータから初期シードを取得
 initial_seed = st.query_params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
 
-# 3. セッションステートの初期化
-st.session_state.setdefault("gif_bytes", None)
-st.session_state.setdefault("bg_color", list(BG_OPTIONS.keys())[0])
-st.session_state.setdefault("scale", 10)
-st.session_state.setdefault("randomize", False)
-st.session_state.setdefault("outline", False)
-st.session_state.setdefault("transparent", False)
+# 3. セッションステートの初期値設定
+defaults = {
+    "gif_bytes": None,
+    "bg_color": list(BG_OPTIONS.keys())[0],
+    "scale": 10,
+    "randomize": False,
+    "outline": False,
+    "transparent": False,
+}
+for key, val in defaults.items():
+    st.session_state.setdefault(key, val)
 
 # 4. アニメ生成関数
 def generate_animation():
@@ -37,7 +41,7 @@ def generate_animation():
         )
     seed = st.session_state.seed_input
 
-    # URLにseedを反映（正式 API のみ）
+    # URL にシードを反映（正式 API）
     st.set_query_params(seed=seed)
 
     # 背景色反映
@@ -50,23 +54,23 @@ def generate_animation():
         st.session_state.transparent
     )
 
-    # GIF化
+    # GIF 化
     buf = io.BytesIO()
-    big = [
-        f.resize((16*st.session_state.scale, 16*st.session_state.scale), Image.NEAREST)
+    big_frames = [
+        f.resize((16 * st.session_state.scale, 16 * st.session_state.scale), Image.NEAREST)
         for f in frames
     ]
     save_kwargs = {
         'format': 'GIF',
         'save_all': True,
-        'append_images': big[1:],
+        'append_images': big_frames[1:],
         'duration': 150,
         'loop': 0,
-        'disposal': 2
+        'disposal': 2,
     }
     if st.session_state.transparent:
         save_kwargs['transparency'] = 0
-    big[0].save(buf, **save_kwargs)
+    big_frames[0].save(buf, **save_kwargs)
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
 
@@ -78,29 +82,42 @@ with st.sidebar:
     st.checkbox("輪郭を表示", key="outline")
     st.checkbox("背景を透明に", key="transparent")
     st.selectbox(
-        "背景色", list(BG_OPTIONS.keys()),
+        "背景色",
+        list(BG_OPTIONS.keys()),
         key="bg_color",
         index=list(BG_OPTIONS.keys()).index(st.session_state.bg_color)
     )
     st.selectbox(
-        "拡大率", [1, 10, 15, 20],
+        "拡大率",
+        [1, 10, 15, 20],
         key="scale",
         index=[1, 10, 15, 20].index(st.session_state.scale)
     )
     st.button("▶️ 生成", on_click=generate_animation, key="generate_button")
 
 # 6. 結果表示
-gif = st.session_state.gif_bytes
-if gif:
+if st.session_state.gif_bytes:
     st.subheader(
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
     )
-    st.image(gif, width=16*st.session_state.scale)
+    st.image(
+        st.session_state.gif_bytes,
+        width=16 * st.session_state.scale
+    )
 
     # シェアリンク作成
-    base = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
-    seed = urllib.parse.quote(st.session_state.seed_input)
-    url = f"{base}?seed={seed}"
-    text = urllib.parse.quote(f"後藤「{st.session_state.seed_input}」")
-    intent_url = f"https://twitter.com/intent/tweet?text={text}&url={urllib.parse.quote(url)}"
-    st.markdown(f"[Xで後藤をシェア]({intent_url})", unsafe_allow_html=True)
+    base_url = (
+        "https://share.streamlit.io/"
+        "trebuchet-souchi/gotoh-animator/main/app.py"
+    )
+    seed_quoted = urllib.parse.quote(st.session_state.seed_input)
+    url_with_seed = f"{base_url}?seed={seed_quoted}"
+    text_quoted = urllib.parse.quote(f"後藤「{st.session_state.seed_input}」")
+    intent_url = (
+        f"https://twitter.com/intent/tweet?text={text_quoted}"
+        f"&url={urllib.parse.quote(url_with_seed)}"
+    )
+    st.markdown(
+        f"[Xで後藤をシェア]({intent_url})",
+        unsafe_allow_html=True
+    )
