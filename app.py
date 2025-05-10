@@ -9,11 +9,11 @@ from gotoh import GoatGenerator, BG_OPTIONS
 
 # 1. ページ設定
 st.set_page_config(
-    page_title="後藤 Animator",
+    page_title="🐐 Goat Pixel Animator",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-st.title("後藤 Animator")
+st.title("🐐 Goat Pixel Animator")
 
 # 2. セッションステートのデフォルト値設定
 defaults = {
@@ -28,22 +28,24 @@ defaults = {
 for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
-# 3. URL クエリパラメータから初期値取得（seed|bg_color の結合方式）
-# seed パラメータから "シード|背景色" を分割して取得
-raw = st.query_params.get("seed", "")
-if isinstance(raw, list):
-    raw = raw[0]
-# raw の例: "jz12ee|Gray" または "jz12ee"
-parts = raw.split("|", 1)
-initial_seed = parts[0]
-initial_bg = parts[1] if len(parts) == 2 else ""
+# 3. URL クエリパラメータから初期値取得（起動時のみ実行）
+# 初回ロード判定用フラグ
+if "initial_loaded" not in st.session_state:
+    raw = st.query_params.get("seed", "")
+    if isinstance(raw, list):
+        raw = raw[0]
+    parts = raw.split("|", 1)
+    initial_seed = parts[0]
+    initial_bg = parts[1] if len(parts) == 2 else ""
+    # セッションに反映
+    if initial_seed:
+        st.session_state.seed_input = initial_seed
+    if initial_bg in BG_OPTIONS:
+        st.session_state.bg_color = initial_bg
+    # フラグを立てる
+    st.session_state.initial_loaded = True
 
-if initial_seed:
-    st.session_state.seed_input = initial_seed
-if initial_bg and initial_bg in BG_OPTIONS:
-    st.session_state.bg_color = initial_bg
-
-# 4. アニメ生成関数
+# 4. アニメ生成関数 アニメ生成関数
 def generate_animation():
     # シード選択
     if st.session_state.randomize or not st.session_state.seed_input:
@@ -95,7 +97,7 @@ with st.sidebar:
         key="randomize"
     )
     st.checkbox(
-        "輪郭線",
+        "輪郭を表示",
         key="outline"
     )
     st.checkbox(
@@ -119,12 +121,6 @@ with st.sidebar:
         on_click=generate_animation,
         key="generate_button"
     )
-    st.markdown(
-        "低確率で後藤に橙の角や青い角が生える")
-    st.markdown(
-        "更に低確率で後藤の後頭部や尻のあたりに小さい「マタ後藤」ができる")
-    st.markdown(
-        "輪郭線をつけると後藤の目が潰れることが多い")
 
 # 6. 初回ロード時自動生成
 if initial_seed and st.session_state.gif_bytes is None:
