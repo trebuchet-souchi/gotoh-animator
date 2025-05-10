@@ -27,11 +27,8 @@ with st.sidebar:
     st.header("Settings")
 
     # テキスト入力と各ウィジェット（ラベルを唯一に）
-    seed_input = st.text_input(
-        "Seed（使いたい文字列）",
-        value=st.session_state.seed_input,
-        key="seed_input"
-    )
+    seed_input = st.text_input("Seed（使いたい文字列）", key="seed_input")
+    
     randomize = st.checkbox(
         "🔀 ランダムシードにする",
         value=(seed_input == "")
@@ -58,51 +55,34 @@ with st.sidebar:
     )
 
     # 生成ボタン（サイドバーに常時表示）
-    generate_button = st.button("▶️ 生成", key="generate_button")
+    st.button("▶️ 生成", on_click=generate_animation, key="gen_btn")
 
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
-if generate_button:
-    # 1) シードを最終決定して state に書き戻し
-    if randomize or not seed_input:
-        seed = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
-    else:
-        seed = seed_input
-    st.session_state.seed_input = seed
+def generate_animation():
+    # → この中でのみ st.session_state.seed_input を書き換える
+    if randomize or not st.session_state.seed_input:
+        new_seed = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
+        st.session_state.seed_input = new_seed
 
-    # 2) URL に反映（experimental API で統一）
-    st.experimental_set_query_params(seed=seed)
-    
-    # 背景色を即反映
-    gotoh.PALETTE["bg"] = BG_OPTIONS[bg_color]
+    # URL に seed を反映
+    st.experimental_set_query_params(seed=st.session_state.seed_input)
 
-    # シード決定
-    if randomize or not seed_input:
-        seed = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
-    else:
-        seed = seed_input
+    # 背景色反映
+    gotoh.PALETTE["bg"] = BG_OPTIONS[st.session_state.bg_color]
 
-    # 状態を保存
-    st.session_state.last_seed = seed
-    st.session_state.last_bg = bg_color
+    # アニメ生成
+    gen = GoatGenerator(st.session_state.seed_input)
+    frames = gen.generate_animation(st.session_state.outline, st.session_state.transparent)
 
-    # フレーム生成
-    gen = GoatGenerator(seed)
-    frames = gen.generate_animation(outline, transparent)
-
-    # リサイズ＆GIF化
+    # GIF 化
     big_frames = [
-        f.resize((16 * scale, 16 * scale), Image.NEAREST)
+        f.resize((16 * st.session_state.scale, 16 * st.session_state.scale), Image.NEAREST)
         for f in frames
     ]
     buf = io.BytesIO()
     big_frames[0].save(
-        buf,
-        format="GIF",
-        save_all=True,
-        append_images=big_frames[1:],
-        duration=150,
-        loop=0,
-        disposal=2
+        buf, format="GIF", save_all=True, append_images=big_frames[1:],
+        duration=150, loop=0, disposal=2
     )
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
@@ -117,33 +97,18 @@ if st.session_state.gif_bytes:
         width=16 * scale
     )
 # ─── シェアリンクを作る ────────────────────
-# 1) あなたの公開アプリのベース URL
-app_base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
+if st.session_state.gif_bytes:
+    st.subheader(f"Seed = `{st.session_state.seed_input}`  |  背景色 = {st.session_state.bg_color}")
+    st.image(st.session_state.gif_bytes, width=16 * st.session_state.scale)
 
-# 2) 現在のシード
-current_seed = st.session_state.seed_input
-
-# 3) seed を付与した URL
-url_with_seed = f"{app_base_url}?seed={urllib.parse.quote(current_seed)}"
-
-# 4) 投稿テキスト
-app_base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
-# 現在のシードを state から取得
-current_seed = st.session_state.seed_input
-# seed 付き URL を組み立て
-url_with_seed = f"{app_base_url}?seed={urllib.parse.quote(current_seed)}"
-# ツイート文を作成
-tweet_text = f"後藤「{current_seed}」"
-
-# 5) X Web Intent URL を組み立て
-intent_url = (
-    "https://twitter.com/intent/tweet"
-    f"?text={urllib.parse.quote(tweet_text)}"
-    f"&url={urllib.parse.quote(url_with_seed)}"
-)
-
-# 6) Markdown でリンク表示
-st.markdown(
-    f"[Xで後藤をシェア]({intent_url})",
-    unsafe_allow_html=True
-)
+    # シェアリンク
+    app_base = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
+    seed = st.session_state.seed_input
+    url_with_seed = f"{app_base}?seed={urllib.parse.quote(seed)}"
+    text = f"後藤「{seed}」"
+    intent = (
+        "https://twitter.com/intent/tweet"
+        f"?text={urllib.parse.quote(text)}"
+        f"&url={urllib.parse.quote(url_with_seed)}"
+    )
+    st.markdown(f"[Xで後藤をシェア]({intent})", unsafe_allow_html=True)
