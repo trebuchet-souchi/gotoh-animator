@@ -116,7 +116,7 @@ if st.session_state.gif_bytes:
     )
 
 current_seed = st.session_state.seed_input
-base_url = "https://share.streamlit.io/<あなたのユーザー名>/repo/main/app.py"
+base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
 url_with_seed = f"{base_url}?seed={urllib.parse.quote(current_seed)}"
 tweet_text = f"後藤「{current_seed}」です"
 intent_url = (
