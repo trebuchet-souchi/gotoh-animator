@@ -97,3 +97,20 @@ if st.session_state.gif_bytes:
         st.session_state.gif_bytes,
         width=16 * scale
     )
+
+# ④ シェアリンク作成
+base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
+current_seed = st.session_state.seed_input
+url_with_seed = f"{base_url}?seed={urllib.parse.quote(current_seed)}"
+
+tweet_text = f"後藤「{current_seed}」"
+intent_url = (
+    "https://twitter.com/intent/tweet"
+    f"?text={urllib.parse.quote(tweet_text)}"
+    f"&url={urllib.parse.quote(url_with_seed)}"
+)
+
+st.markdown(
+    f"[Xで後藤をシェア]({intent_url})",
+    unsafe_allow_html=True
+)
