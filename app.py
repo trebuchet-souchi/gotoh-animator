@@ -75,7 +75,12 @@ def generate_animation():
 with st.sidebar:
     st.header("Settings")
     # シード入力（セッションステートと同期）
-    st.text_input("Seed（使いたい文字列）", key="seed_input")
+        # シード入力（セッションステートと同期）
+    seed_input = st.text_input(
+        "Seed（使いたい文字列）",
+        value=st.session_state.seed_input,
+        key="seed_input"
+    )
     st.checkbox("🔀 ランダムシードにする", key="randomize")
     st.checkbox("輪郭を表示", key="outline")
     st.checkbox("背景を透明に", key="transparent")
