@@ -5,7 +5,21 @@ from PIL import Image
 import streamlit as st
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
+import urllib.parse
+import streamlit as st
 
+# ① ページ設定
+st.set_page_config(...)
+
+# ② クエリ取得＆テキストボックス初期化
+params = st.experimental_get_query_params()
+initial_seed = params.get("seed", [""])[0]
+
+seed_input = st.text_input(
+    "Seed（使いたい文字列）",
+    value=initial_seed,
+    key="seed_input"
+)
 # ─── ページ設定は必ず最初に ───────────────────────────────
 st.set_page_config(page_title="後藤Animator", layout="wide")
 st.title("後藤Animator")
@@ -50,6 +64,7 @@ with st.sidebar:
 
     # 生成ボタン（サイドバーに常時表示）
     generate_button = st.button("▶️ 生成")
+    
 
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
 if generate_button:
@@ -96,4 +111,23 @@ if st.session_state.gif_bytes:
     st.image(
         st.session_state.gif_bytes,
         width=16 * scale
+    )
+
+# 6. 【ここにシェアリンクを挿入】
+# シェアリンクは結果表示のすぐ下に配置します。
+# ツイートに含めるseed値付きURLを生成し、X（旧Twitter）intentで開くようにします。
+snippet = st.empty()  # プレースホルダー
+if gif:
+    base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
+    current_seed = st.session_state.last_seed
+    url_with_seed = f"{base_url}?seed={urllib.parse.quote(current_seed)}"
+    tweet_text = f"後藤"
+    intent_url = (
+        "https://twitter.com/intent/tweet"
+        f"?text={urllib.parse.quote(tweet_text)}"
+        f"&url={urllib.parse.quote(url_with_seed)}"
+    )
+    snippet.markdown(
+        f"[Xで後藤をシェア]({intent_url})",
+        unsafe_allow_html=True
     )
