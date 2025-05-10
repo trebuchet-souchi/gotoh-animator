@@ -4,11 +4,6 @@ import io
 from PIL import Image
 import urllib.parse
 import streamlit as st
-# Alias for Query API: fallback to experimental if official API is unavailable
-if not hasattr(st, 'query_params'):
-    st.query_params = st.experimental_get_query_params()
-if not hasattr(st, 'set_query_params'):
-    st.set_query_params = st.experimental_set_query_params
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
 
@@ -20,7 +15,7 @@ st.set_page_config(
 )
 st.title("🐐 Goat Pixel Animator")
 
-# 2. クエリパラメータから初期seedを取得（正式 API）
+# 2. クエリパラメータから初期seedを取得（正式 API のみ使用）
 initial_seed = st.query_params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
@@ -41,19 +36,20 @@ def generate_animation():
             random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6)
         )
     seed = st.session_state.seed_input
-        # URLにseedを反映
-    if hasattr(st, "set_query_params"):  # 正式 API が利用可能なら
-        st.set_query_params(seed=seed)
-    else:  # なければ experimental API をフォールバックで使用
-        st.experimental_set_query_params(seed=seed)
-    # 背景色を反映
+
+    # URLにseedを反映（正式 API のみ）
+    st.set_query_params(seed=seed)
+
+    # 背景色反映
     gotoh.PALETTE['bg'] = BG_OPTIONS[st.session_state.bg_color]
+
     # フレーム生成
     gen = GoatGenerator(seed)
     frames = gen.generate_animation(
         st.session_state.outline,
         st.session_state.transparent
     )
+
     # GIF化
     buf = io.BytesIO()
     big = [
@@ -100,12 +96,11 @@ if gif:
         f"Seed = `{st.session_state.seed_input}` | 背景色 = {st.session_state.bg_color}"
     )
     st.image(gif, width=16*st.session_state.scale)
+
     # シェアリンク作成
     base = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
     seed = urllib.parse.quote(st.session_state.seed_input)
     url = f"{base}?seed={seed}"
     text = urllib.parse.quote(f"後藤「{st.session_state.seed_input}」")
-    intent_url = (
-        f"https://twitter.com/intent/tweet?text={text}&url={urllib.parse.quote(url)}"
-    )
+    intent_url = f"https://twitter.com/intent/tweet?text={text}&url={urllib.parse.quote(url)}"
     st.markdown(f"[Xで後藤をシェア]({intent_url})", unsafe_allow_html=True)
