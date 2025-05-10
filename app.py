@@ -25,13 +25,6 @@ initial_seed = params.get("seed", [""])[0]
 if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
 
-# ③ テキストボックス（key="seed_input" でセッションと同期）
-seed_input = st.text_input(
-    "Seed（使いたい文字列）",
-    value=st.session_state.seed_input,
-    key="seed_input"
-)
-
 # ─── サイドバー：設定UIを常にトップレベルで定義 ─────────────────
 with st.sidebar:
     st.header("Settings")
