@@ -107,17 +107,28 @@ if st.session_state.gif_bytes:
         st.session_state.gif_bytes,
         width=16 * scale
     )
-#シェアボタン
+# ─── シェアリンクを作る ────────────────────
+# 1) あなたの公開アプリのベース URL
+app_base_url = "https://share.streamlit.io/あなたのユーザー名/リポジトリ/main/app.py"
+
+# 2) 現在のシード
 current_seed = st.session_state.seed_input
-base_url     = "https://share.streamlit.io/あなたのユーザー名/リポジトリ/main/app.py"
-url_with_seed = f"{base_url}?seed={urllib.parse.quote(current_seed)}"
-tweet_text    = f"後藤「{current_seed}」です"
-intent_url    = (
+
+# 3) seed を付与した URL
+url_with_seed = f"{app_base_url}?seed={urllib.parse.quote(current_seed)}"
+
+# 4) 投稿テキスト
+tweet_text = f"後藤「{current_seed}」"
+
+# 5) X Web Intent URL を組み立て
+intent_url = (
     "https://twitter.com/intent/tweet"
     f"?text={urllib.parse.quote(tweet_text)}"
     f"&url={urllib.parse.quote(url_with_seed)}"
 )
+
+# 6) Markdown でリンク表示
 st.markdown(
-    f"[ Xでこの後藤をシェア]({intent_url})",
+    f"[Xで後藤をシェア]({intent_url})",
     unsafe_allow_html=True
 )
