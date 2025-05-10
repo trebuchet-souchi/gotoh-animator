@@ -28,23 +28,22 @@ defaults = {
 for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
-# 3. URL クエリパラメータから初期値取得
-params = st.query_params
-st.write("▶️ Debug params:", params)
-# seed
-seed_param = params.get("seed", "")
-initial_seed = seed_param or ""
-st.write("▶️ Debug initial_seed:", initial_seed)
+# 3. URL クエリパラメータから初期値取得（seed|bg_color の結合方式）
+# seed パラメータから "シード|背景色" を分割して取得
+raw = st.query_params.get("seed", "")
+if isinstance(raw, list):
+    raw = raw[0]
+# raw の例: "jz12ee|Gray" または "jz12ee"
+parts = raw.split("|", 1)
+initial_seed = parts[0]
+initial_bg = parts[1] if len(parts) == 2 else ""
+
 if initial_seed:
     st.session_state.seed_input = initial_seed
-# bg_color (query key bg_color と一致させる)
-bgparam = params.get("bg_color", "")
-initial_bg = bgparam or ""
-st.write("▶️ Debug initial_bg:", initial_bg)
-if initial_bg in BG_OPTIONS:
+if initial_bg and initial_bg in BG_OPTIONS:
     st.session_state.bg_color = initial_bg
 
-# 4. アニメ生成関数 アニメ生成関数 アニメ生成関数 アニメ生成関数
+# 4. アニメ生成関数
 def generate_animation():
     # シード選択
     if st.session_state.randomize or not st.session_state.seed_input:
@@ -135,18 +134,17 @@ if st.session_state.gif_bytes:
         width=16 * st.session_state.scale
     )
 
-    # 8. シェアリンク作成（seed & bg_color）
+    # 8. シェアリンク作成（シードと背景色を "シード|背景色" にパック）
     base_url = (
         "https://share.streamlit.io/"
         "trebuchet-souchi/gotoh-animator/main/app.py"
     )
-    seed_quoted = urllib.parse.quote(st.session_state.seed_input)
-    bg_quoted = urllib.parse.quote(st.session_state.bg_color)
-    url_with_seed = f"{base_url}?seed={seed_quoted}&bg_color={bg_quoted}"
+    combined = f"{st.session_state.seed_input}|{st.session_state.bg_color}"
+    q = urllib.parse.quote(combined)
+    url_with_seed = f"{base_url}?seed={q}"
     text = f"後藤「{st.session_state.seed_input}」"
-    text_quoted = urllib.parse.quote(text)
     intent_url = (
-        f"https://twitter.com/intent/tweet?text={text_quoted}"
+        f"https://twitter.com/intent/tweet?text={urllib.parse.quote(text)}"
         f"&url={urllib.parse.quote(url_with_seed)}"
     )
     st.markdown(
