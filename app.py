@@ -21,11 +21,14 @@ if "seed_input" not in st.session_state:
 st.session_state.setdefault("gif_bytes", None)
 st.session_state.setdefault("bg_color", next(iter(BG_OPTIONS.keys())))
 st.session_state.setdefault("scale", 10)
+st.session_state.setdefault("randomize", True)
+st.session_state.setdefault("outline", False)
+st.session_state.setdefault("transparent", False)
 
 # ─── 生成ロジック（ボタンを押したときだけ実行） ────────────────────
 def generate_animation():
     # → この中でのみ st.session_state.seed_input を書き換える
-    if randomize or not st.session_state.seed_input:
+    if st.session_state.randomize or not st.session_state.seed_input:
         new_seed = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
         st.session_state.seed_input = new_seed
 
@@ -37,7 +40,10 @@ def generate_animation():
 
     # アニメ生成
     gen = GoatGenerator(st.session_state.seed_input)
-    frames = gen.generate_animation(st.session_state.outline, st.session_state.transparent)
+    frames = gen.generate_animation(
+        st.session_state.outline,
+        st.session_state.transparent
+    )
 
     # GIF 化
     big_frames = [
@@ -58,18 +64,20 @@ with st.sidebar:
 
     # テキスト入力と各ウィジェット（ラベルを唯一に）
     seed_input = st.text_input("Seed（使いたい文字列）", key="seed_input")
-    
-    randomize = st.checkbox(
+    st.checkbox(
         "🔀 ランダムシードにする",
-        value=(seed_input == "")
+        value=st.session_state.randomize,
+        key="randomize"
     )
-    outline = st.checkbox(
+    st.checkbox(
         "後藤に輪郭をつける",
-        value=False
+        value=st.session_state.outline,
+        key="outline"
     )
-    transparent = st.checkbox(
+    st.checkbox(
         "背景を透明に",
-        value=False
+        value=st.session_state.transparent,
+        key="transparent"
     )
     bg_color = st.selectbox(
         "背景色",
