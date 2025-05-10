@@ -37,14 +37,14 @@ initial_seed = seed_param or ""
 st.write("▶️ Debug initial_seed:", initial_seed)
 if initial_seed:
     st.session_state.seed_input = initial_seed
-# bg_color
-bg_param = params.get("bg", "")
-initial_bg = bg_param or ""
+# bg_color (query key bg_color と一致させる)
+bgparam = params.get("bg_color", "")
+initial_bg = bgparam or ""
 st.write("▶️ Debug initial_bg:", initial_bg)
 if initial_bg in BG_OPTIONS:
     st.session_state.bg_color = initial_bg
 
-# 4. アニメ生成関数 アニメ生成関数 アニメ生成関数
+# 4. アニメ生成関数 アニメ生成関数 アニメ生成関数 アニメ生成関数
 def generate_animation():
     # シード選択
     if st.session_state.randomize or not st.session_state.seed_input:
