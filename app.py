@@ -29,9 +29,14 @@ for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
 # 3. クエリパラメータから初期シード取得
+# 2. URL クエリパラメータから初期シードを取得
 initial_seed = st.query_params.get("seed", [""])[0]
-if initial_seed and not st.session_state.seed_input:
+st.write("▶️ raw query_params:", st.query_params)               # 何が来ている？
+st.write("▶️ initial_seed repr:", repr(initial_seed))          # 文字列として正しいか？
+if "seed_input" not in st.session_state:
     st.session_state.seed_input = initial_seed
+st.write("▶️ session_state.seed_input repr:", repr(st.session_state.seed_input))
+
 
 # 4. アニメ生成関数
 def generate_animation():
