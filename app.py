@@ -28,12 +28,15 @@ defaults = {
 for key, val in defaults.items():
     st.session_state.setdefault(key, val)
 
-# 3. URL クエリパラメータから初期シード取得
-# st.query_params.get returns a string if only one value is provided
-raw_seed = st.query_params.get("seed", "")
-initial_seed = raw_seed
+# 3. URL クエリパラメータから初期値取得
+# seed
+initial_seed = st.query_params.get("seed", [""])[0] if isinstance(st.query_params.get("seed"), list) else st.query_params.get("seed", "")
 if initial_seed and not st.session_state.seed_input:
     st.session_state.seed_input = initial_seed
+# bg_color
+initial_bg = st.query_params.get("bg", [""])[0] if isinstance(st.query_params.get("bg"), list) else st.query_params.get("bg", "")
+if initial_bg and initial_bg in BG_OPTIONS and st.session_state.bg_color != initial_bg:
+    st.session_state.bg_color = initial_bg
 
 # 4. アニメ生成関数
 def generate_animation():
@@ -126,14 +129,16 @@ if st.session_state.gif_bytes:
         width=16 * st.session_state.scale
     )
 
-    # 8. シェアリンク作成
+    # 8. シェアリンク作成（seed & bg）
     base_url = (
         "https://share.streamlit.io/"
         "trebuchet-souchi/gotoh-animator/main/app.py"
     )
     seed_quoted = urllib.parse.quote(st.session_state.seed_input)
-    url_with_seed = f"{base_url}?seed={seed_quoted}"
-    text_quoted = urllib.parse.quote(f"後藤「{st.session_state.seed_input}」")
+    bg_quoted = urllib.parse.quote(st.session_state.bg_color)
+    url_with_seed = f"{base_url}?seed={seed_quoted}&bg={bg_quoted}"
+    text = f"後藤「{st.session_state.seed_input}」"
+    text_quoted = urllib.parse.quote(text)
     intent_url = (
         f"https://twitter.com/intent/tweet?text={text_quoted}"
         f"&url={urllib.parse.quote(url_with_seed)}"
