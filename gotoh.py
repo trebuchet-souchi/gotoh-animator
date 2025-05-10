@@ -7,16 +7,16 @@ from PIL import Image, ImageDraw, ImageColor
 
 # 背景色オプション
 BG_OPTIONS = {
-    'Purple': '#ff00b3',       # 紫
-    'Sky':    '#20F6FF',       # 空
-    'Green':  '#71E500',       # 緑
-    'Deep Purple': '#4A215E',  # 深紫
-    'Gray':   '#696969',       # 灰
+    'Purple':     '#ff00b3',  # 紫
+    'Sky':        '#20F6FF',  # 空
+    'Green':      '#71E500',  # 緑
+    'Deep Purple':'#4A215E',  # 深紫
+    'Gray':       '#696969',  # 灰
 }
 
-# パレット定義
+# 描画パレット（bgは後でapp.pyから書き換える）
 PALETTE = {
-    'bg':       BG_OPTIONS['Purple'],  # デフォルト: 紫
+    'bg':       BG_OPTIONS['Purple'],
     'body':     '#ffffff',
     'eye':      '#000000',
     'horn':     '#ffb300',
@@ -24,20 +24,14 @@ PALETTE = {
     'horn_blue':'#0080ff',
 }
 
-# フレームサイズと遅延
 FRAME_SIZE     = (16, 16)
 FRAME_DELAY_MS = 150
 
-
 def get_line_points(x0, y0, x1, y1):
-    """
-    Bresenham のアルゴリズムで直線上の座標を列挙
-    """
+    """Bresenham のアルゴリズムで線上のピクセルを返す"""
     points = []
-    dx = abs(x1 - x0)
-    dy = -abs(y1 - y0)
-    sx = 1 if x0 < x1 else -1
-    sy = 1 if y0 < y1 else -1
+    dx = abs(x1 - x0); dy = -abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1; sy = 1 if y0 < y1 else -1
     err = dx + dy
     while True:
         points.append((x0, y0))
@@ -45,32 +39,25 @@ def get_line_points(x0, y0, x1, y1):
             break
         e2 = 2 * err
         if e2 >= dy:
-            err += dy
-            x0 += sx
+            err += dy; x0 += sx
         if e2 <= dx:
-            err += dx
-            y0 += sy
+            err += dx; y0 += sy
     return points
 
-
 class GoatGenerator:
-    """
-    山羊ピクセルアニメーションを生成するジェネレータ
-    """
+    """山羊ピクセルアニメーションを生成するクラス"""
+
     def __init__(self, seed: str):
         self.seed_str = seed
         h = hashlib.sha256(seed.encode('utf-8')).digest()
-        # random.Random に渡すため、整数値に変換
         self.rand = random.Random(int.from_bytes(h[:8], 'big'))
 
     def generate_frame(self, body_shape, eye_positions, leg_shapes, horns,
                        small_shape, small_eyes, small_horns,
                        small_flag, dy, outline: bool, transparent: bool):
-        """
-        単一フレームを描く。座標とパラメータに基づいて PIL.Image を返す
-        """
-        im = Image.new('RGBA' if transparent else 'RGB', FRAME_SIZE,
-                       ImageColor.getcolor(PALETTE['bg'], 'RGB'))
+        mode = 'RGBA' if transparent else 'RGB'
+        bg_color = ImageColor.getcolor(PALETTE['bg'], 'RGB')
+        im = Image.new(mode, FRAME_SIZE, bg_color)
         draw = ImageDraw.Draw(im)
 
         # 身体
@@ -95,7 +82,7 @@ class GoatGenerator:
         for hx, hy in horns:
             draw.point((hx, hy + dy), fill=PALETTE['horn'])
 
-        # 小さい山羊パーツ（ミニチュア）
+        # ミニ山羊パーツ
         if small_flag:
             draw.ellipse(small_shape, fill=PALETTE['body'])
             for ex, ey in small_eyes:
@@ -106,7 +93,7 @@ class GoatGenerator:
         return im
 
     def generate_animation(self, outline: bool, transparent: bool):
-       base = (3,5,13,11)
+        base = (3,5,13,11)
         bw, bh = base[2]-base[0], base[3]-base[1]
         eye_n = self.weighted_choice(self.eye_weights)
         leg_n = self.weighted_choice(self.leg_weights)
