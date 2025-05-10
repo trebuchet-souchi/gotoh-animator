@@ -5,6 +5,8 @@ from PIL import Image
 import streamlit as st
 import gotoh
 from gotoh import GoatGenerator, BG_OPTIONS
+import urllib.parse
+import streamlit as st
 
 # ─── ページ設定は必ず最初に ───────────────────────────────
 st.set_page_config(page_title="後藤Animator", layout="wide")
@@ -15,6 +17,20 @@ st.title("後藤Animator")
 st.session_state.setdefault("gif_bytes", None)
 st.session_state.setdefault("last_seed", "")
 st.session_state.setdefault("last_bg", next(iter(BG_OPTIONS.keys())))
+
+# ② クエリパラメータから初期シードを取得してセッションにセット
+params = st.experimental_get_query_params()
+initial_seed = params.get("seed", [""])[0]
+# seed_input キーがなければ初回にだけセット
+if "seed_input" not in st.session_state:
+    st.session_state.seed_input = initial_seed
+
+# ③ テキストボックス（key="seed_input" でセッションと同期）
+seed_input = st.text_input(
+    "Seed（使いたい文字列）",
+    value=st.session_state.seed_input,
+    key="seed_input"
+)
 
 # ─── サイドバー：設定UIを常にトップレベルで定義 ─────────────────
 with st.sidebar:
@@ -87,6 +103,7 @@ if generate_button:
     )
     buf.seek(0)
     st.session_state.gif_bytes = buf.getvalue()
+    st.experimental_set_query_params(seed=st.session_state.seed_input)
 
 # ─── 結果表示 ───────────────────────────────────────────────
 if st.session_state.gif_bytes:
@@ -98,19 +115,13 @@ if st.session_state.gif_bytes:
         width=16 * scale
     )
 
-# ④ シェアリンク作成
-base_url = "https://share.streamlit.io/trebuchet-souchi/gotoh-animator/main/app.py"
 current_seed = st.session_state.seed_input
+base_url = "https://share.streamlit.io/<あなたのユーザー名>/repo/main/app.py"
 url_with_seed = f"{base_url}?seed={urllib.parse.quote(current_seed)}"
-
-tweet_text = f"後藤「{current_seed}」"
+tweet_text = f"後藤「{current_seed}」です"
 intent_url = (
     "https://twitter.com/intent/tweet"
     f"?text={urllib.parse.quote(tweet_text)}"
     f"&url={urllib.parse.quote(url_with_seed)}"
 )
-
-st.markdown(
-    f"[Xで後藤をシェア]({intent_url})",
-    unsafe_allow_html=True
-)
+st.markdown(f"[ Xで後藤をシェア]({intent_url})", unsafe_allow_html=True)
