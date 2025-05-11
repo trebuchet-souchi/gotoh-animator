@@ -97,7 +97,7 @@ with st.sidebar:
         key="randomize"
     )
     st.checkbox(
-        "輪郭を表示",
+        "輪郭線",
         key="outline"
     )
     st.checkbox(
